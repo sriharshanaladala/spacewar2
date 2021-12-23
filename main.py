@@ -1,53 +1,61 @@
 import pygame
 import random
 import math
+from pygame import mixer
+
 pygame.init()
 
 screen = pygame.display.set_mode((800, 600))
 
 pygame.display.set_caption("space war")
 background = pygame.image.load("space for war.jpg")
+mixer.music.load("background.wav")
+mixer.music.play(-5)
 surface = pygame.image.load("ufo.png")
 pygame.display.set_icon(surface)
 
-score = 0
+score_value = 0
+font = pygame.font.SysFont("resansbold.ttf", 30)
+textX = 10
+textY = 10
+
+def show_score(x, y):
+    score = font.render("score = " + str(score_value), True, (255, 255, 255))
+    screen.blit(score, (x, y))
 
 playerimg = pygame.image.load("arcade-game.png")
 playerX = 370
 playerY = 480
 playerX_changed = 0
 
-enemyimg = pygame.image.load("alien (3).png")
-enemyX = random.randint(0, 740)
-enemyY = random.randint(0, 480)
-enemyX_changed = 0.3
-enemyY_changed = 40
+# multiple enemies
+enemyimg = []
+enemyX = []
+enemyY = []
+enemyX_changed = []
+enemyY_changed = []
+numb_of_enemies = 6
 
-enemy1img = pygame.image.load("monster.png")
-enemy1X = random.randint(0, 740)
-enemy1Y = random.randint(0, 480)
-enemy1X_changed = 0.3
-enemy1Y_changed = 70
+for i in range (numb_of_enemies):
+    enemyimg.append(pygame.image.load("alien (3).png"))
+    enemyX.append(random.randint(0, 730))
+    enemyY.append(random.randint(50, 180))
+    enemyX_changed.append(0.3)
+    enemyY_changed.append(40)
 
 bulletimg = pygame.image.load("bullet (1).png")
 bulletX = 0
 bulletY = 480
 bulletX_changed = 0
-bulletY_changed = 5
+bulletY_changed = 2
 bullet_state = "ready"
 
 
-def is_collision1(enemyX, enemyY, bulletX, bulletY):
+def is_collision(enemyX, enemyY, bulletX, bulletY):
     distance = math.sqrt(math.pow((enemyX-bulletX), 2) + math.pow((enemyY-bulletY), 2))
     if distance < 27:
-        return True
-    else:
-        return False
-
-
-def is_collision2(enemy1X, enemy1Y, bulletX, bulletY):
-    distance = math.sqrt(math.pow((enemy1X-bulletX), 2) + math.pow((enemy1Y-bulletY), 2))
-    if distance < 27:
+        colusion_sound = mixer.Sound("explosion.wav")
+        colusion_sound.play()
         return True
     else:
         return False
@@ -57,12 +65,9 @@ def player(x, y):
     screen.blit(playerimg, (x, y))
 
 
-def enemy(x, y):
-    screen.blit(enemyimg, (x, y))
+def enemy(x, y, i):
+    screen.blit(enemyimg[i], (x, y))
 
-
-def enemy1(x, y):
-    screen.blit(enemy1img, (x, y))
 
 
 def fire_bullet(x, y):
@@ -88,6 +93,8 @@ while running:
                 # print("right arrow is pressed")
             if event.key == pygame.K_SPACE:
                 if bullet_state == "ready":
+                    bullet_sound = mixer.Sound ("laser.wav")
+                    bullet_sound.play()
                     bulletX = playerX
                     fire_bullet(bulletX, bulletY)
 
@@ -102,20 +109,24 @@ while running:
     elif playerX >= 740:
         playerX = 740
 # enemy move ment with in screen
-    enemyX += enemyX_changed
-    if enemyX <= 0:
-        enemyX_changed = 0.3
-        enemyY += enemyY_changed
-    elif enemyX >= 740:
-        enemyX_changed = -0.3
-        enemyY += enemyY_changed
-    enemy1X += enemy1X_changed
-    if enemy1X <= 0:
-        enemy1X_changed = 0.3
-        enemy1Y += enemy1Y_changed
-    elif enemy1X >= 740:
-        enemy1X_changed = -0.3
-        enemy1Y += enemy1Y_changed
+
+    for i in range(numb_of_enemies):
+        enemyX[i] += enemyX_changed[i]
+        if enemyX[i] <= 0:
+            enemyX_changed[i] = 0.3
+            enemyY[i] += enemyY_changed[i]
+        elif enemyX[i] >= 740:
+            enemyX_changed[i] = -0.5
+            enemyY[i] += enemyY_changed[i]
+        collusion = is_collision(enemyX[i], enemyY[i], bulletX, bulletY)
+        if collusion:
+            bulletY = 480
+            bullet_state = "ready"
+            score_value += 1
+            enemyX[i] = random.randint(0, 730)
+            enemyY[i] = random.randint(50, 180)
+
+        enemy(enemyX[i], enemyY[i], i)
     if bulletY <= 0:
         bulletY = 480
         bullet_state = "ready"
@@ -123,24 +134,8 @@ while running:
         fire_bullet(bulletX, bulletY)
         bulletY -= bulletY_changed
 
-    collusion1 = is_collision1(enemyX, enemyY, bulletX, bulletY)
-    if collusion1:
-        bulletY = 480
-        bullet_state = "ready"
-        score += 1
-        enemyX = random.randint(0, 740)
-        enemyY = random.randint(0, 480)
-        print(score)
-    collusion2 = is_collision2(enemy1X, enemy1Y, bulletX, bulletY)
-    if collusion2:
-        bulletY = 480
-        bullet_state = "ready"
-        score += 1
-        enemy1X = random.randint(0, 740)
-        enemy1Y = random.randint(0, 480)
-        print(score)
+
 
     player(playerX, playerY)
-    enemy(enemyX, enemyY)
-    enemy1(enemy1X, enemy1Y)
+    show_score(textX, textY)
     pygame.display.update()
