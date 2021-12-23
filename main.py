@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 pygame.init()
 
 screen = pygame.display.set_mode((800, 600))
@@ -8,6 +9,8 @@ pygame.display.set_caption("space war")
 background = pygame.image.load("space for war.jpg")
 surface = pygame.image.load("ufo.png")
 pygame.display.set_icon(surface)
+
+score = 0
 
 playerimg = pygame.image.load("arcade-game.png")
 playerX = 370
@@ -30,8 +33,24 @@ bulletimg = pygame.image.load("bullet (1).png")
 bulletX = 0
 bulletY = 480
 bulletX_changed = 0
-bulletY_changed = 10
+bulletY_changed = 5
 bullet_state = "ready"
+
+
+def is_collision1(enemyX, enemyY, bulletX, bulletY):
+    distance = math.sqrt(math.pow((enemyX-bulletX), 2) + math.pow((enemyY-bulletY), 2))
+    if distance < 27:
+        return True
+    else:
+        return False
+
+
+def is_collision2(enemy1X, enemy1Y, bulletX, bulletY):
+    distance = math.sqrt(math.pow((enemy1X-bulletX), 2) + math.pow((enemy1Y-bulletY), 2))
+    if distance < 27:
+        return True
+    else:
+        return False
 
 
 def player(x, y):
@@ -68,7 +87,9 @@ while running:
                 playerX_changed = 0.5
                 # print("right arrow is pressed")
             if event.key == pygame.K_SPACE:
-                fire_bullet(playerX, bulletY)
+                if bullet_state == "ready":
+                    bulletX = playerX
+                    fire_bullet(bulletX, bulletY)
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -95,9 +116,29 @@ while running:
     elif enemy1X >= 740:
         enemy1X_changed = -0.3
         enemy1Y += enemy1Y_changed
+    if bulletY <= 0:
+        bulletY = 480
+        bullet_state = "ready"
     if bullet_state == "fire":
-        fire_bullet(playerX, bulletY)
+        fire_bullet(bulletX, bulletY)
         bulletY -= bulletY_changed
+
+    collusion1 = is_collision1(enemyX, enemyY, bulletX, bulletY)
+    if collusion1:
+        bulletY = 480
+        bullet_state = "ready"
+        score += 1
+        enemyX = random.randint(0, 740)
+        enemyY = random.randint(0, 480)
+        print(score)
+    collusion2 = is_collision2(enemy1X, enemy1Y, bulletX, bulletY)
+    if collusion2:
+        bulletY = 480
+        bullet_state = "ready"
+        score += 1
+        enemy1X = random.randint(0, 740)
+        enemy1Y = random.randint(0, 480)
+        print(score)
 
     player(playerX, playerY)
     enemy(enemyX, enemyY)
